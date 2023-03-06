@@ -1,0 +1,70 @@
+pipeline {
+    agent any
+
+    stages {
+        stage('init') {
+            steps {
+                echo 'Pipeline starting'
+            }
+        }
+        stage ('checkout') {
+            steps{ 
+                script{
+                    checkout scmGit(branches: [[name: '*/main']], extensions: [], userRemoteConfigs: [[credentialsId: '108b86be-72f4-412d-89e3-1460f010609a', url: 'https://github.com/thadbeera/terraform-fastapi.git']])
+                }
+            }   
+        }
+       /* stage ('taking package'){
+            steps{
+                script{
+                    sh """
+                   #!/bin/bash
+                    set -x
+                    if [ -d "fast_api" ]; then
+                    exit
+                    else
+                    git clone https://github.com/thadbeera/fast_api.git
+                    fi
+                  """  
+                }
+            }
+        } */
+                                                                                     
+        stage ('running terraform plan'){
+            steps{                
+                script{
+                    sh """
+                        #! /bin/bash
+                        set -x
+                        pwd                   
+                        chmod 777 terraform-fastapi
+                        cd terraform-fastapi
+                        terraform init
+                        terraform plan
+                    """                    
+                }
+        }                                            
+            }                 
+    
+        stage('Terraform apply') {
+            when {
+                expression { 
+                   return params.APPLY == 'true'
+                }
+            }
+            steps {
+                    sh """
+                    #! /bin/bash
+                    set -x
+                    pwd
+                    cd terraform-fastapi 
+                    chmod 777 terraform.tfstate
+                    terraform apply -auto-approve
+                    """
+                }
+            }
+   } 
+        }
+        
+    
+
